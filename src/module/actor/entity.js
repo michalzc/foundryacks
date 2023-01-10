@@ -601,7 +601,7 @@ export class AcksActor extends Actor {
       return;
     }
     this.items.forEach((item) => {
-      if (item.type == "weapon" && item.data.slow && item.data.equipped) {
+      if (item.type == "weapon" && item.system.slow && item.system.equipped) {
         this.system.isSlow = true;
         return;
       }
@@ -681,7 +681,7 @@ export class AcksActor extends Actor {
     // Compute treasure
     let total = 0;
     let treasure = this.items.filter(
-      (i) => i.data.type == "item" && i.system.treasure
+      (i) => i.type == "item" && i.system.treasure
     );
     treasure.forEach((item) => {
       total += item.system.quantity.value * item.system.cost
@@ -701,7 +701,7 @@ export class AcksActor extends Actor {
     const data = this.system;
     data.aac.naked = baseAac + data.scores.dex.mod;
     data.ac.naked = baseAc - data.scores.dex.mod;
-    const armors = this.items.filter((i) => i.data.type == "armor");
+    const armors = this.items.filter((i) => i.type == "armor");
     armors.forEach((a) => {
       if (a.system.equipped && a.system.type != "shield") {
         baseAc = a.system.ac;

@@ -9,11 +9,13 @@ export class AcksActorSheet extends ActorSheet {
 
   getData() {
     const data = super.getData();
+    console.log("ACKS | ", data);
 
     data.config = CONFIG.ACKS;
     // Settings
     data.config.ascendingAC = game.settings.get("acks", "ascendingAC");
     data.config.encumbrance = game.settings.get("acks", "encumbranceOption");
+    data.system = data.actor.system
 
     // Prepare owned items
     this._prepareItems(data);

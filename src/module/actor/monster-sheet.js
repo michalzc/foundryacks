@@ -76,7 +76,7 @@ export class AcksActorSheetMonster extends AcksActorSheet {
 
     // Settings
     data.config.morale = game.settings.get("acks", "morale");
-    data.data.data.details.treasure.link = TextEditor.enrichHTML(data.data.data.details.treasure.table);
+    system.data.details.treasure.link = TextEditor.enrichHTML(system.data.details.treasure.table);
     data.isNew = this.actor.isNew();
     return data;
   }
@@ -140,7 +140,7 @@ export class AcksActorSheetMonster extends AcksActorSheet {
       await weapon.update({
         data: {
           counter: {
-            value: parseInt(weapon.data.data.counter.max, 10),
+            value: parseInt(weapon.system.counter.max, 10),
           },
         },
       });
@@ -184,7 +184,7 @@ export class AcksActorSheetMonster extends AcksActorSheet {
       let check = $(ev.currentTarget).closest('.check-field').data('check');
       actorObject.rollAppearing({ event: event, check: check });
     });
-    
+
     // Everything below here is only needed if the sheet is editable
     if (!this.options.editable) return;
 
@@ -216,7 +216,7 @@ export class AcksActorSheetMonster extends AcksActorSheet {
           type: type,
           data: duplicate(header.dataset),
         };
-        delete itemData.data["type"];
+        delete itemsystem["type"];
         return itemData;
       };
 
@@ -254,7 +254,7 @@ export class AcksActorSheetMonster extends AcksActorSheet {
     html.find(".item-pattern").click(ev => {
       const li = $(ev.currentTarget).parents(".item");
       const item = this.actor.items.get(li.data("itemId"));
-      let currentColor = item.data.data.pattern;
+      let currentColor = item.system.pattern;
       let colors = Object.keys(CONFIG.ACKS.colors);
       let index = colors.indexOf(currentColor);
       if (index + 1 == colors.length) {
