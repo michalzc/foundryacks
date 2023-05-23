@@ -27,98 +27,106 @@ export class AcksCharacterCreator extends FormApplication {
    * @return {Object}
    */
   getData() {
-    let data = this.object;
+    const data = foundry.utils.deepClone(this.object);
     data.user = game.user;
     data.config = CONFIG.ACKS;
-    data.counters = {
+    this.counters = {
       str: 0,
       wis: 0,
       dex: 0,
       int: 0,
       cha: 0,
       con: 0,
-      gold: 0
-    }
-    data.stats = {
+      gold: 0,
+    };
+    this.stats = {
       sum: 0,
       avg: 0,
-      std: 0
-    }
+      std: 0,
+    };
+    this.scores = {};
+    this.gold = 0;
     return data;
   }
 
   /* -------------------------------------------- */
 
   doStats(ev) {
-    let list = $(ev.currentTarget).closest('.attribute-list');
-    let values = [];
-    list.find('.score-value').each((i, s) => {
-      if (s.value != 0) {
-        values.push(parseInt(s.value));
-      }
-    })
+    const list = $(ev.currentTarget).closest(".attribute-list");
+    const scores = Object.values(this.scores);
+    const n = scores.length;
+    const sum = scores.reduce((acc, next) => acc + next.value, 0);
+    const mean = parseFloat(sum) / n;
+    const std = Math.sqrt(
+      scores
+        .map((x) => (x.value - mean) ** 2)
+        .reduce((acc, next) => acc + next, 0) / n
+    );
 
-    let n = values.length;
-    let sum = values.reduce((a, b) => a + b);
-    let mean = parseFloat(sum) / n;
-    let std = Math.sqrt(values.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b) / n);
-
-    let stats = list.siblings('.roll-stats');
-    stats.find('.sum').text(sum);
-    stats.find('.avg').text(Math.round(10 * sum / n) / 10);
-    stats.find('.std').text(Math.round(100 * std) / 100);
+    const stats = list.siblings(".roll-stats");
+    stats.find(".sum").text(sum);
+    stats.find(".avg").text(Math.round((10 * sum) / n) / 10);
+    stats.find(".std").text(Math.round(100 * std) / 100);
 
     if (n >= 6) {
-      $(ev.currentTarget).closest('form').find('button[type="submit"]').removeAttr('disabled');
+      $(ev.currentTarget)
+        .closest("form")
+        .find('button[type="submit"]')
+        .removeAttr("disabled");
     }
 
     this.object.stats = {
-      sum: sum,
-      avg: Math.round(10 * sum / n) / 10,
-      std: Math.round(100 * std) / 100
-    }
+      sum,
+      avg: Math.round((10 * sum) / n) / 10,
+      std: Math.round(100 * std) / 100,
+    };
   }
 
   rollScore(score, options = {}) {
     // Increase counter
-    this.object.counters[score]++;
+    this.counters[score] += 1;
 
-    const label = score != "gold" ? game.i18n.localize(`ACKS.scores.${score}.long`) : "Gold";
+    const label =
+      score === "gold"
+        ? "Gold"
+        : game.i18n.localize(`ACKS.scores.${score}.long`);
     const rollParts = ["3d6"];
     const data = {
       roll: {
-        type: "result"
-      }
+        type: "result",
+      },
     };
+    if (options.skipMessage) {
+      return new Roll(rollParts[0]).evaluate({ async: false });
+    }
     // Roll and return
     return AcksDice.Roll({
       event: options.event,
       parts: rollParts,
-      data: data,
+      data,
       skipDialog: true,
       speaker: ChatMessage.getSpeaker({ actor: this }),
-      flavor: game.i18n.format('ACKS.dialog.generateScore', { score: label, count: this.object.counters[score] }),
-      title: game.i18n.format('ACKS.dialog.generateScore', { score: label, count: this.object.counters[score] }),
+      flavor: game.i18n.format("ACKS.dialog.generateScore", {
+        score: label,
+        count: this.counters[score],
+      }),
+      title: game.i18n.format("ACKS.dialog.generateScore", {
+        score: label,
+        count: this.counters[score],
+      }),
     });
   }
 
   async close(options) {
     // Gather scores
-    let scores = {};
-    $(this.form.children).find(".score-roll").each((_, d) => {
-      let gr = $(d).closest('.form-group');
-      let val = gr.find(".score-value").val();
-      scores[gr.data("score")] = val;
-    })
-    const gold = $(this.form.children).find('.gold-value').val();
     const speaker = ChatMessage.getSpeaker({ actor: this });
     const templateData = {
       config: CONFIG.ACKS,
-      scores: scores,
+      scores: this.scores,
       title: game.i18n.localize("ACKS.dialog.generator"),
       stats: this.object.stats,
-      gold: gold
-    }
+      gold: this.gold,
+    };
     const content = await renderTemplate("/systems/acks/templates/chat/roll-creation.html", templateData)
     ChatMessage.create({
       content: content,
@@ -130,30 +138,44 @@ export class AcksCharacterCreator extends FormApplication {
   /** @override */
   activateListeners(html) {
     super.activateListeners(html);
-    html.find('a.score-roll').click((ev) => {
-      let el = ev.currentTarget.parentElement.parentElement;
-      let score = el.dataset.score;
-      this.rollScore(score, { event: ev }).then(r => {
-        $(el).find('input').val(r.total).trigger('change');
+    html.find("a.score-roll").click((ev) => {
+      const el = ev.currentTarget.parentElement.parentElement;
+      const { score } = el.dataset;
+      this.rollScore(score, { event: ev }).then((r) => {
+        this.scores[score] = { value: r.total };
+        $(el).find("input").val(r.total).trigger("change");
       });
     });
 
-    html.find('a.gold-roll').click((ev) => {
-      let el = ev.currentTarget.parentElement.parentElement.parentElement;
-      this.rollScore("gold", { event: ev }).then(r => {
-        $(el).find('.gold-value').val(r.total * 10);
+    html.find("a.gold-roll").click((ev) => {
+      const el = ev.currentTarget.parentElement.parentElement.parentElement;
+      this.rollScore("gold", { event: ev }).then((r) => {
+        this.gold = 10 * r.total;
+        $(el).find(".gold-value").val(this.gold);
       });
     });
 
-    html.find('input.score-value').change(ev => {
+    html.find("input.score-value").change((ev) => {
       this.doStats(ev);
-    })
+    });
+
+    html.find("a.auto-roll").click(async (ev) => {
+      const stats = ["str", "int", "dex", "wis", "con", "cha"];
+      for (const char of stats) {
+        const r = await this.rollScore(char, { event: ev, skipMessage: true });
+        this.scores[char] = { value: r.total };
+      }
+      this.doStats(ev);
+      const r = await this.rollScore("gold", { event: ev, skipMessage: true });
+      this.gold = 10 * r.total;
+      this.submit();
+    });
   }
 
   async _onSubmit(event, { updateData = null, preventClose = false, preventRender = false } = {}) {
-    super._onSubmit(event, { updateData: updateData, preventClose: preventClose, preventRender: preventRender });
+    const extendedData = { ...updateData, system: { scores: this.scores } };
+    super._onSubmit(event, { updateData: extendedData, preventClose: preventClose, preventRender: preventRender });
     // Generate gold
-    let gold = event.target.elements.namedItem('gold').value;
     const itemData = {
       name: "GP",
       type: "item",
@@ -163,7 +185,7 @@ export class AcksCharacterCreator extends FormApplication {
         cost: 1,
         weight: 1,
         quantity: {
-          value: gold
+          value: this.gold
         }
       }
     };
