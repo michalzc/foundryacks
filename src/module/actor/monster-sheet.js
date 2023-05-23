@@ -76,7 +76,7 @@ export class AcksActorSheetMonster extends AcksActorSheet {
 
     // Settings
     data.config.morale = game.settings.get("acks", "morale");
-    system.data.details.treasure.link = TextEditor.enrichHTML(system.data.details.treasure.table);
+    data.system.details.treasure.link = TextEditor.enrichHTML(data.system.details.treasure.table,{async: false});
     data.isNew = this.actor.isNew();
     return data;
   }

@@ -4,7 +4,7 @@ export class AcksCombat {
     data.combatants = [];
     let groups = {};
     combat.data.combatants.forEach((cbt) => {
-      groups[cbt.data.flags.acks.group] = {present: true};
+      groups[cbt.flags.acks.group] = {present: true};
       data.combatants.push(cbt);
     });
 
@@ -27,7 +27,7 @@ export class AcksCombat {
         return;
       }
 
-      let initiative = groups[combatant.data.flags.acks.group].initiative;
+      let initiative = groups[combatant.flags.acks.group].initiative;
       if (combatant.actor.data.data.isSlow) {
         initiative -= 1;
       }
@@ -126,15 +126,15 @@ export class AcksCombat {
       // Append spellcast and retreat
       const controls = $(ct).find(".combatant-controls .combatant-control");
       const cmbtant = game.combat.combatants.get(ct.dataset.combatantId);
-      const moveActive = cmbtant.data.flags.acks?.moveInCombat ? "active" : "";
+      const moveActive = cmbtant.flags.acks?.moveInCombat ? "active" : "";
       controls.eq(1).after(
         `<a class='combatant-control move-combat ${moveActive}'><i class='fas fa-running'></i></a>`
       );
-      const spellActive = cmbtant.data.flags.acks?.prepareSpell ? "active" : "";
+      const spellActive = cmbtant.flags.acks?.prepareSpell ? "active" : "";
       controls.eq(1).after(
         `<a class='combatant-control prepare-spell ${spellActive}'><i class='fas fa-magic'></i></a>`
       );
-      const holdActive = cmbtant.data.flags.acks?.holdTurn ? "active" : "";
+      const holdActive = cmbtant.flags.acks?.holdTurn ? "active" : "";
       controls.eq(1).after(
         `<a class='combatant-control hold-turn ${holdActive}'><i class='fas fa-pause-circle'></i></a>`
       );
@@ -162,7 +162,7 @@ export class AcksCombat {
 
       // Get group color
       const combatant = object.viewed.combatants.get(ct.dataset.combatantId);
-      let color = combatant.data.flags.acks?.group;
+      let color = combatant.flags.acks?.group;
 
       // Append colored flag
       let controls = $(ct).find(".combatant-controls");
@@ -190,7 +190,7 @@ export class AcksCombat {
           ct.initiative &&
           ct.initiative != "-789.00" &&
           ct._id != data._id &&
-          ct.data.flags.acks.group == combatant.data.flags.acks.group
+          ct.flags.acks.group == combatant.flags.acks.group
         ) {
           groupInit = ct.initiative;
           // Set init
