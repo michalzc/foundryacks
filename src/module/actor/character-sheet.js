@@ -92,7 +92,7 @@ export class AcksActorSheetCharacter extends AcksActorSheet {
   }
 
   _pushLang(table) {
-    const data = this.actor.data.data;
+    const data = this.actor.system;
     let update = duplicate(data[table]);
     this._chooseLang().then((dialogInput) => {
       const name = CONFIG.ACKS.languages[dialogInput.choice];
@@ -108,7 +108,7 @@ export class AcksActorSheetCharacter extends AcksActorSheet {
   }
 
   _popLang(table, lang) {
-    const data = this.actor.data.data;
+    const data = this.actor.system;
     let update = data[table].value.filter((el) => el != lang);
     let newData = {};
     newData[table] = { value: update };
@@ -148,7 +148,7 @@ export class AcksActorSheetCharacter extends AcksActorSheet {
       let actorObject = this.actor;
       actorObject.rollLoyalty({ event: event });
     });
-    
+
     html.find(".ability-score .attribute-name a").click((ev) => {
       let actorObject = this.actor;
       let element = event.currentTarget;
@@ -236,7 +236,7 @@ export class AcksActorSheetCharacter extends AcksActorSheet {
         type: type,
         data: duplicate(header.dataset),
       };
-      delete itemData.data["type"];
+      delete itemsystem["type"];
       await this.actor.createEmbeddedDocuments("Item", [
         itemData,
       ]);
@@ -249,7 +249,7 @@ export class AcksActorSheetCharacter extends AcksActorSheet {
       await item.update({
         _id: li.data("itemId"),
         data: {
-          equipped: !item.data.data.equipped,
+          equipped: !item.system.equipped,
         },
       });
     });
